@@ -39,7 +39,7 @@
       >
         超时说明：{{ timeoutDesc }}
       </div>
-      <div id="viewer" class="photo-container">
+      <div id="viewer1" class="photo-container">
         <div v-for="item in timeoutPhotoList" :key="item.photo" class="photo">
           <div
             v-if="item.isfake === '1' || item.issame === '1'"
@@ -82,7 +82,7 @@
         <div class="target-photo">
           <img :src="targetPhoto" />
         </div>
-        <h5>疑似相似图片</h5>
+        <h5 style="margin-top: 10px">疑似相似图片</h5>
         <div id="photoSet" class="same-photo-list">
           <div
             v-for="(item, index) in samePhotoList"
@@ -103,11 +103,11 @@
   </div>
 </template>
 <script>
-import XtWeb from 'xtion-web'
-import { getImageUrl } from './util.js'
-import './viewerjs/viewer.css'
-import IEKKViewer from './viewerjs/viewer.js'
-import { post } from './http'
+import XtWeb from "xtion-web";
+import { getImageUrl } from "./util.js";
+import "./viewerjs/viewer.css";
+import IEKKViewer from "./viewerjs/viewer.js";
+import { post } from "./http";
 export default {
   mixins: [XtWeb.Engine.UI.View],
   props: {
@@ -115,13 +115,13 @@ export default {
       type: Object,
       default: () => {
         return {
-          id: '', // 门店id
-          ksvid: '' // 拜访明细id
-        }
-      }
-    }
+          id: "", // 门店id
+          ksvid: "", // 拜访明细id
+        };
+      },
+    },
   },
-  data () {
+  data() {
     return {
       options: {
         zIndex: 99999,
@@ -145,122 +145,134 @@ export default {
           prev: true,
           next: true,
           rotateLeft: true,
-          rotateRight: true
-        }
+          rotateRight: true,
+        },
       },
       isShowPhotoSet: false,
-      targetPhoto: '',
+      targetPhoto: "",
       samePhotoSet: [],
       viewer: null,
+      viewer1: null,
       photoSetViewer: null,
       hasTimeout: false,
-      timeoutDesc: '',
+      timeoutDesc: "",
       photoList: [],
       timeoutPhotoList: [],
-      samePhotoList: []
-    }
+      samePhotoList: [],
+    };
   },
   watch: {
-    value () {
-      this.getPhotoSet()
-    }
+    value() {
+      this.getPhotoSet();
+    },
   },
-  mounted () {
+  mounted() {
     // this.getPhotoSet();
   },
   methods: {
     // 查看疑似重复/翻拍照片集对话框
-    showPhotoSetDialog (data) {
-      if (data.issame === '1') {
-        this.isShowPhotoSet = true
-        this.targetPhoto = data.photo
+    showPhotoSetDialog(data) {
+      if (data.issame === "1") {
+        this.isShowPhotoSet = true;
+        this.targetPhoto = data.photo;
         if (data.imagecode) {
-          this.getSamePhotoSet(data.imagecode)
+          this.getSamePhotoSet(data.imagecode);
         }
       }
     },
     // 关闭疑似重复/翻拍照片集对话框
-    closePhotoSetDialog () {
-      this.isShowPhotoSet = false
-      this.targetPhoto = ''
-      this.samePhotoSet = []
+    closePhotoSetDialog() {
+      this.isShowPhotoSet = false;
+      this.targetPhoto = "";
+      this.samePhotoSet = [];
     },
     // 获取照片
-    async getPhotoSet () {
-      this.photoList = []
+    async getPhotoSet() {
+      this.photoList = [];
       let json = {
-        kx_kq_store: this.value
-      }
+        kx_kq_store: this.value,
+      };
       const res = await post(
         this,
-        '/api/teapi/dy-biz/893405830819483679/1539056393896726627',
+        "/api/teapi/dy-biz/893405830819483679/1539056393896726627",
         json
-      )
-      let photoSet = res.outparam
+      );
+      let photoSet = res.outparam;
       photoSet.forEach((item) => {
-        if (item.name === '超时举证') {
-          this.hasTimeout = true
-          this.timeoutDesc = res.outparam_timeout.timeoutdesc
+        if (item.name === "超时举证") {
+          this.hasTimeout = true;
+          this.timeoutDesc = res.outparam_timeout.timeoutdesc;
         }
-        item.photo = getImageUrl(item.photo)
-      })
+        item.photo = getImageUrl(item.photo);
+      });
       // 超时举证照片划分
       if (!this.hasTimeout) {
-        this.photoList = photoSet
+        this.photoList = photoSet;
       } else {
         // 抓出超时和签退
         this.timeoutPhotoList = photoSet.filter((item) => {
-          return item.name === '超时举证'
-        })
-        let signOutPhoto = photoSet.pop()
+          return item.name === "超时举证";
+        });
+        let signOutPhoto = photoSet.pop();
         this.photoList = photoSet.filter((item) => {
-          return item.name !== '超时举证'
-        })
-        this.timeoutPhotoList.push(signOutPhoto)
+          return item.name !== "超时举证";
+        });
+        this.timeoutPhotoList.push(signOutPhoto);
       }
       this.$nextTick(function () {
         if (this.viewer) {
-          this.viewer.destroy()
+          this.viewer.destroy();
         }
         this.viewer = new IEKKViewer(
-          document.getElementById('viewer'),
+          document.getElementById("viewer"),
           this.options
-        )
+        );
         // this.observerhandle(document.querySelectorAll('.photo img'))
-        console.log('$nexttick', this.viewer)
-      })
-      console.log('getPhotoSet', this.photoList)
+        console.log("$nexttick", this.viewer);
+      });
+      this.$nextTick(function () {
+        if (this.viewer1) {
+          this.viewer1.destroy();
+        }
+        this.viewer1 = new IEKKViewer(
+          document.getElementById("viewer1"),
+          this.options
+        );
+        // this.observerhandle(document.querySelectorAll('.photo img'))
+        console.log("$nexttick", this.viewer);
+      });
+      console.log("getPhotoSet", this.photoList);
     },
     // 获取相似照片集
-    async getSamePhotoSet (imageCode) {
-      this.samePhotoList = []
+    async getSamePhotoSet(imageCode) {
+      this.samePhotoList = [];
       let json = {
         tn_ai_similarity_result: {
-          imagecode: imageCode
-        }
-      }
+          imagecode: imageCode,
+        },
+      };
       const res = await post(
         this,
-        '/api/teapi/dy-biz/893405830819483679/1539056393896726625',
+        "/api/teapi/dy-biz/893405830819483679/1539056393896726625",
         json
-      )
-      let samePhotoSet = res.outparam
+      );
+      let samePhotoSet = res.outparam;
       samePhotoSet.forEach((item) => {
-        item.photo = getImageUrl(item.photo)
-      })
-      this.samePhotoList = samePhotoSet
+        item.photo = getImageUrl(item.photo);
+      });
+      this.samePhotoList = samePhotoSet;
       this.$nextTick(function () {
         if (this.photoSetViewer) {
-          this.photoSetViewer.destroy()
+          this.photoSetViewer.destroy();
         }
         this.photoSetViewer = new IEKKViewer(
-          document.getElementById('photoSet'),
+          document.getElementById("photoSet"),
           this.options
-        )
-        console.log('$nexttick', this.photoSetViewer)
-      })
-      console.log('getSamePhotoSet', this.samePhotoList)
-    }
+        );
+        console.log("$nexttick", this.photoSetViewer);
+      });
+      console.log("getSamePhotoSet", this.samePhotoList);
+    },
     // 图片懒加载  "intersection-observer": "^0.12.2"
     // observerhandle (els, callback) {
     //   let observer = new IntersectionObserver(entries => {
@@ -282,8 +294,8 @@ export default {
     //     observer.observe(el)
     //   })
     // }
-  }
-}
+  },
+};
 </script>
 
 <style lang="less" scoped>
